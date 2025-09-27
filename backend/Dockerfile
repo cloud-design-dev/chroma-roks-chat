@@ -4,9 +4,7 @@ FROM --platform=$BUILDPLATFORM python:3.12-slim
 # Install uv - fast Python package installer and resolver
 RUN pip install uv
 
-# Create non-root user for OpenShift compatibility
-RUN groupadd --gid 1001 appuser && \
-    useradd --uid 1001 --gid 1001 --create-home --shell /bin/bash appuser
+# OpenShift compatibility - no hardcoded user needed
 
 WORKDIR /app
 
@@ -22,11 +20,10 @@ COPY . .
 
 # Create data directory and set permissions for OpenShift arbitrary UID support
 RUN mkdir -p /app/data && \
-    chown -R 1001:0 /app && \
+    chown -R 0:0 /app && \
     chmod -R g+rwX /app
 
-# Switch to non-root user
-USER 1001
+# OpenShift will run with arbitrary UID, no explicit USER needed
 
 # Activate virtual environment and set PATH
 ENV VIRTUAL_ENV=/app/.venv

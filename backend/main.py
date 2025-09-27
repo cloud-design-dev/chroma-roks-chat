@@ -30,7 +30,13 @@ logger = logging.getLogger(__name__)
 class SimpleVectorDB:
     def __init__(self):
         self.facts = []
-        self.vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+        self.vectorizer = TfidfVectorizer(
+            stop_words='english', 
+            max_features=1000,
+            ngram_range=(1, 2),  # Use both single words and word pairs
+            lowercase=True,
+            token_pattern=r'\b[a-zA-Z][a-zA-Z]+\b'  # Better tokenization
+        )
         self.vectors = None
         self.fact_counter = 0
         
@@ -65,26 +71,62 @@ class SimpleVectorDB:
         texts = [fact['text'] for fact in self.facts]
         self.vectors = self.vectorizer.fit_transform(texts)
         
+    def _create_query_variations(self, query: str) -> List[str]:
+        """Create variations of the query to handle plurals and common word forms"""
+        variations = [query.lower()]
+        
+        # Handle common plural/singular transformations
+        words = query.lower().split()
+        for i, word in enumerate(words):
+            # Try removing 's' for common plurals
+            if word.endswith('s') and len(word) > 3:
+                singular = word[:-1]
+                new_words = words.copy()
+                new_words[i] = singular
+                variations.append(' '.join(new_words))
+            
+            # Try adding 's' for singulars
+            if not word.endswith('s'):
+                plural = word + 's'
+                new_words = words.copy()
+                new_words[i] = plural
+                variations.append(' '.join(new_words))
+        
+        return list(set(variations))  # Remove duplicates
+    
     def search(self, query: str, top_k: int = 3):
-        """Search for similar facts"""
+        """Search for similar facts with improved handling of word variations"""
         if not self.facts or self.vectors is None:
             return []
+        
+        # Try multiple query variations to handle plurals
+        query_variations = self._create_query_variations(query)
+        best_results = []
+        
+        for query_var in query_variations:
+            query_vector = self.vectorizer.transform([query_var])
+            similarities = cosine_similarity(query_vector, self.vectors)[0]
             
-        query_vector = self.vectorizer.transform([query])
-        similarities = cosine_similarity(query_vector, self.vectors)[0]
+            # Get top-k most similar facts for this variation
+            top_indices = np.argsort(similarities)[::-1][:top_k]
+            
+            for idx in top_indices:
+                if similarities[idx] > 0.05:  # Lower threshold for better plural matching
+                    best_results.append({
+                        'fact': self.facts[idx],
+                        'similarity': float(similarities[idx])
+                    })
         
-        # Get top-k most similar facts
-        top_indices = np.argsort(similarities)[::-1][:top_k]
+        # Remove duplicates and sort by similarity
+        seen_facts = set()
+        unique_results = []
+        for result in sorted(best_results, key=lambda x: x['similarity'], reverse=True):
+            fact_id = result['fact']['id']
+            if fact_id not in seen_facts:
+                seen_facts.add(fact_id)
+                unique_results.append(result)
         
-        results = []
-        for idx in top_indices:
-            if similarities[idx] > 0.1:  # Minimum similarity threshold
-                results.append({
-                    'fact': self.facts[idx],
-                    'similarity': float(similarities[idx])
-                })
-                
-        return results
+        return unique_results[:top_k]
         
     def get_stats(self):
         """Get count of facts by animal"""
