@@ -166,10 +166,32 @@ async def chat(query: ChatQuery) -> ChatResponse:
         logger.error(f"Query failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
+@app.delete("/api/reset")
+async def reset_database():
+    """Reset database to initial state with base facts only"""
+    try:
+        vector_db.reset()
+        initialize_database()
+        
+        logger.info("Database reset to initial state")
+        return {"message": "Database reset successfully", "facts_count": len(vector_db.facts)}
+    except Exception as e:
+        logger.error(f"Failed to reset database: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to reset database: {str(e)}")
+
 @app.post("/api/add_fact")
 async def add_fact(request: AddFactRequest):
-    """Add a new animal fact to the database"""
+    """Add a new animal fact to the database with duplicate detection"""
     try:
+        # Check for duplicate facts
+        existing_facts = [fact for fact in vector_db.facts 
+                         if fact['animal'].lower() == request.animal.lower() 
+                         and fact['text'].lower().strip() == request.fact.lower().strip()]
+        
+        if existing_facts:
+            logger.info(f"Fact already exists for {request.animal}: {request.fact[:50]}...")
+            return {"message": f"Fact already exists for {request.animal}", "duplicate": True}
+        
         vector_db.add_single_fact(request.animal, request.fact)
         
         logger.info(f"Added new fact for {request.animal}: {request.fact[:50]}...")

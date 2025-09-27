@@ -1,18 +1,23 @@
 #!/bin/bash
 
 # Database Import Script for OpenShift Deployment  
-# Usage: ./import-database.sh <backup-file.json> [namespace]
+# Usage: ./import-database.sh <backup-file.json> [namespace] [--reset]
 # Note: Current implementation uses in-memory vector storage
 
 set -e
 
 BACKUP_FILE=${1:-"openshift-facts-backup.json"}
 NAMESPACE=${2:-"kasten-demo-chatapp"}
+RESET_FLAG=$3
 
 echo "🔄 Importing database backup to OpenShift deployment"
 echo "📁 Backup file: $BACKUP_FILE"
 echo "🏗️ Namespace: $NAMESPACE"
 echo "💡 Note: App uses in-memory storage - facts imported via API"
+
+if [ "$RESET_FLAG" = "--reset" ]; then
+    echo "🔄 Will reset database before import to avoid duplicates"
+fi
 
 # Check if backup file exists
 if [ ! -f "$BACKUP_FILE" ]; then
@@ -64,6 +69,20 @@ done
 echo "📊 Current database state:"
 curl -s "$APP_URL/api/stats" | jq -r 'to_entries[] | "  \(.key): \(.value) facts"' || echo "  Unable to parse current stats"
 
+# Reset database if requested
+if [ "$RESET_FLAG" = "--reset" ]; then
+    echo "🔄 Resetting database to avoid duplicates..."
+    RESET_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$APP_URL/api/reset")
+    if [ "$RESET_RESPONSE" = "200" ]; then
+        echo "  ✅ Database reset successfully"
+    else
+        echo "  ⚠️ Reset failed (HTTP $RESET_RESPONSE), continuing with duplicate detection"
+    fi
+    
+    echo "📊 Database state after reset:"
+    curl -s "$APP_URL/api/stats" | jq -r 'to_entries[] | "  \(.key): \(.value) facts"' || echo "  Unable to parse stats"
+fi
+
 # Import facts from backup
 echo "📥 Importing facts from backup..."
 
@@ -77,9 +96,10 @@ fi
 FACT_COUNT=$(jq length "$BACKUP_FILE")
 echo "📋 Found $FACT_COUNT facts to import"
 
-# Import facts one by one
+# Import facts one by one with duplicate detection
 IMPORTED=0
 FAILED=0
+DUPLICATE=0
 
 jq -c '.[]' "$BACKUP_FILE" | while read -r fact; do
     ANIMAL=$(echo "$fact" | jq -r '.animal')
@@ -87,26 +107,31 @@ jq -c '.[]' "$BACKUP_FILE" | while read -r fact; do
     
     echo "Adding fact for $ANIMAL..."
     
-    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/api/add_fact" \
+    RESPONSE=$(curl -s -X POST "$APP_URL/api/add_fact" \
         -H "Content-Type: application/json" \
         -d "{\"animal\":\"$ANIMAL\",\"fact\":\"$FACT_TEXT\"}")
     
-    if [ "$RESPONSE" = "200" ]; then
+    # Check response
+    if echo "$RESPONSE" | jq -e '.duplicate' >/dev/null 2>&1; then
+        ((DUPLICATE++))
+        echo "  📋 Fact already exists for $ANIMAL"
+    elif echo "$RESPONSE" | jq -e '.message' >/dev/null 2>&1; then
         ((IMPORTED++))
         echo "  ✅ Added fact for $ANIMAL"
     else
         ((FAILED++))
-        echo "  ❌ Failed to add fact for $ANIMAL (HTTP $RESPONSE)"
+        echo "  ❌ Failed to add fact for $ANIMAL"
     fi
     
     # Small delay to avoid overwhelming the API
-    sleep 0.5
+    sleep 0.2
 done
 
 # Show final state
 echo ""
 echo "📊 Import completed!"
 echo "  ✅ Imported: $IMPORTED facts"
+echo "  📋 Duplicates: $DUPLICATE facts"
 echo "  ❌ Failed: $FAILED facts"
 echo ""
 echo "📈 Final database state:"
