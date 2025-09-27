@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatapp-frontend
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: animal-facts-chat
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: animal-facts-chat
+        component: frontend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: frontend
+        image: image-registry.openshift-image-registry.svc:5000/kasten-demo-chatapp/chatapp-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1001
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatapp-frontend-service
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: frontend
+spec:
+  selector:
+    app: animal-facts-chat
+    component: frontend
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: chatapp-route
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: frontend
+spec:
+  to:
+    kind: Service
+    name: chatapp-frontend-service
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

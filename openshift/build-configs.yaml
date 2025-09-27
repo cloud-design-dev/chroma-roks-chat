@@ -1,0 +1,101 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: chatapp-backend
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: backend
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: chatapp-frontend
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: frontend
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: chatapp-backend-build
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: backend
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/your-username/kasten-roks-demo-apps.git  # Update with your repo
+      ref: main  # Update with your branch
+    contextDir: chatapp/backend
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: chatapp-backend:latest
+  triggers:
+  - type: GitHub
+    github:
+      secret: github-webhook-secret  # You'll need to create this secret
+  - type: Generic
+    generic:
+      secret: generic-webhook-secret  # You'll need to create this secret
+  - type: ConfigChange
+  - type: ImageChange
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: chatapp-frontend-build
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: frontend
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/your-username/kasten-roks-demo-apps.git  # Update with your repo
+      ref: main  # Update with your branch
+    contextDir: chatapp/frontend
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: chatapp-frontend:latest
+  triggers:
+  - type: GitHub
+    github:
+      secret: github-webhook-secret  # You'll need to create this secret
+  - type: Generic
+    generic:
+      secret: generic-webhook-secret  # You'll need to create this secret
+  - type: ConfigChange
+  - type: ImageChange
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-webhook-secret
+  namespace: kasten-demo-chatapp
+type: Opaque
+data:
+  WebHookSecretKey: bXlfc3VwZXJfc2VjcmV0X3Rva2Vu  # Base64 encoded "my_super_secret_token"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: generic-webhook-secret
+  namespace: kasten-demo-chatapp
+type: Opaque
+data:
+  WebHookSecretKey: bXlfc3VwZXJfc2VjcmV0X3Rva2Vu  # Base64 encoded "my_super_secret_token"

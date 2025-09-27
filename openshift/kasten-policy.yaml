@@ -1,0 +1,39 @@
+apiVersion: k10.kasten.io/v1alpha1
+kind: Policy
+metadata:
+  name: chatapp-backup-policy
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+spec:
+  comment: "Backup policy for Animal Facts Chat App demo"
+  frequency: "@hourly"  # Adjust frequency as needed
+  paused: false
+  retention:
+    hourly: 24
+    daily: 7
+    weekly: 4
+    monthly: 12
+    yearly: 5
+  subFrequency:
+    minutes: [0]
+  selector:
+    matchLabels:
+      app: animal-facts-chat
+  actions:
+  - action: backup
+    backupParameters:
+      profile:
+        name: "default-profile"  # Update with your actual profile name
+        namespace: "kasten-io"
+---
+apiVersion: k10.kasten.io/v1alpha1
+kind: RestorePoint
+metadata:
+  name: chatapp-restore-point
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+spec:
+  # This will be populated when creating restore points via Kasten UI
+  # Used for demo purposes to show restore functionality

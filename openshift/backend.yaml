@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kasten-demo-chatapp
+  labels:
+    name: kasten-demo-chatapp
+    app: animal-facts-chat
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chatapp-data
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chatapp-config
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+data:
+  CORS_ORIGINS: "https://chatapp-kasten-demo-chatapp.apps.your-cluster.com"  # Update with your route
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatapp-backend
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: animal-facts-chat
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: animal-facts-chat
+        component: backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: backend
+        image: image-registry.openshift-image-registry.svc:5000/kasten-demo-chatapp/chatapp-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: PORT
+          value: "8000"
+        envFrom:
+        - configMapRef:
+            name: chatapp-config
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+        - name: persistent-data
+          mountPath: /app/persistent_data
+        livenessProbe:
+          httpGet:
+            path: /api/stats
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/stats
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1001
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: persistent-data
+        persistentVolumeClaim:
+          claimName: chatapp-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatapp-backend-service
+  namespace: kasten-demo-chatapp
+  labels:
+    app: animal-facts-chat
+    component: backend
+spec:
+  selector:
+    app: animal-facts-chat
+    component: backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP
