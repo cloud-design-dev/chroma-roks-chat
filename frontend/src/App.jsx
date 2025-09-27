@@ -63,7 +63,6 @@ function App() {
       });
       
       if (res.ok) {
-        const data = await res.json();
         setSuccess(`Added new fact for ${newAnimal}!`);
         setNewAnimal('');
         setNewFact('');

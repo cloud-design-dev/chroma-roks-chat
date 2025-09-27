@@ -1,8 +1,5 @@
-# Multi-arch base image that works on both x86_64 and arm64 (M1 Mac)
-FROM --platform=$BUILDPLATFORM python:3.12-slim
-
-# Install uv - fast Python package installer and resolver
-RUN pip install uv
+# Alternative Dockerfile using uv's Python management
+FROM --platform=$BUILDPLATFORM ghcr.io/astral-sh/uv:python3.12-slim
 
 # Create non-root user for OpenShift compatibility
 RUN groupadd --gid 1001 appuser && \
@@ -13,8 +10,8 @@ WORKDIR /app
 # Copy requirements file first (for better Docker layer caching)
 COPY requirements.txt .
 
-# Create virtual environment and install dependencies using uv
-RUN uv venv /app/.venv --python /usr/local/bin/python3.12 && \
+# Create virtual environment and install dependencies in one step
+RUN uv venv /app/.venv && \
     uv pip install -r requirements.txt
 
 # Copy application files
@@ -28,7 +25,7 @@ RUN mkdir -p /app/data && \
 # Switch to non-root user
 USER 1001
 
-# Activate virtual environment and set PATH
+# Activate virtual environment
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 

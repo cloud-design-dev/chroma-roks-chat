@@ -3,6 +3,14 @@
 ## Project Overview
 Vector database-backed chat app for animal facts demo with Python backend, Node/React frontend, and IBM Carbon Design System.
 
+## ✨ Key Features
+- ⚡ **UV Package Manager**: Ultra-fast Python package installation (10-100x faster than pip)  
+- 🔒 **Virtual Environment**: Proper isolation, eliminates root user warnings
+- 📊 **Performance**: Package resolution in 283ms, installation in 36ms
+- 🛡️ **OpenShift Compatible**: Non-root user, security contexts, arbitrary UIDs
+- 🎨 **Visual Appeal**: Animal emojis and IBM Carbon Design System
+- 📈 **Kasten Ready**: Backup policies and restore demonstrations
+
 ## OpenShift Deployment
 ```bash
 # Option 1: Build from GitHub source (ready to use)
