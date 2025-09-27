@@ -11,6 +11,14 @@ Vector database-backed chat app for animal facts demo with Python backend, Node/
 - 🎨 **Visual Appeal**: Animal emojis and IBM Carbon Design System
 - 📈 **Kasten Ready**: Backup policies and restore demonstrations
 
+## 🔒 OpenShift Security Requirements
+**IMPORTANT**: OpenShift deployments require specific security contexts:
+- ✅ **Arbitrary UIDs**: Never hardcode `runAsUser` or `fsGroup` - let OpenShift assign
+- ✅ **seccompProfile**: Always set `seccompProfile.type: RuntimeDefault`
+- ✅ **Non-root**: Containers must run as non-root users
+- ✅ **Capabilities**: Drop all capabilities with `capabilities.drop: ["ALL"]`
+- ✅ **No Privilege Escalation**: Set `allowPrivilegeEscalation: false`
+
 ## OpenShift Deployment
 ```bash
 # Option 1: Build from GitHub source (ready to use)

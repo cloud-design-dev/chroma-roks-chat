@@ -80,18 +80,21 @@ oc apply -f openshift/kasten-policy.yaml
 
 ### Step 1: Create Your Backup
 
-#### From Running Local Docker:
+#### Current Deployment Facts:
 ```bash
-# Export facts from local Docker container
-docker cp chatapp-backend-1:/app/data/animal_facts.json ./my-custom-facts.json
+# Export current facts (includes base facts + any custom ones added via UI)
+./openshift/export-database.sh kasten-demo-chatapp
+
+# This creates a backup file with timestamp: openshift-facts-backup-YYYYMMDD-HHMMSS.json
 ```
 
-#### From OpenShift (existing deployment):
+#### From Local Docker (if available):
 ```bash
-# Get facts from running OpenShift deployment
-POD_NAME=$(oc get pod -l component=backend -n kasten-demo-chatapp -o jsonpath='{.items[0].metadata.name}')
-oc cp $POD_NAME:/app/data/animal_facts.json ./openshift-facts.json -n kasten-demo-chatapp
+# Export facts from local Docker container (if running)
+docker cp chatapp-backend-1:/app/data/animal_facts.json ./my-custom-facts.json 2>/dev/null || echo "Local container not found"
 ```
+
+**Important Note**: The current implementation uses in-memory vector storage. The backup script creates a snapshot of the base facts. Any custom facts added via the UI will need to be re-added after import, or you can use the Kasten backup/restore process to preserve the complete application state.
 
 ### Step 2: Import Methods
 
@@ -295,27 +298,30 @@ Your backup should be JSON array format:
 ]
 ```
 
-## 🎯 Best Practices
+## 🎯 Best Practices for OpenShift
 
-1. **Test Import First**: Try with a small subset of facts
-2. **Backup Existing**: Export current state before importing
-3. **Use API Method**: More reliable than direct file manipulation
-4. **Verify Results**: Always check stats after import
-5. **Monitor Logs**: Watch backend logs during import
+1. **Never Hardcode UIDs**: Let OpenShift assign arbitrary UIDs in the allowed range
+2. **Always Set seccompProfile**: Required for restricted security contexts  
+3. **Use In-Memory Storage**: Current implementation uses scikit-learn vector storage
+4. **Backup via Kasten**: For complete application state preservation
+5. **Export Base Facts**: Use export script for baseline fact recovery
+6. **Test Import First**: Try with a small subset of facts
+7. **Monitor Logs**: Watch backend logs during import
 
 ## ⚡ Quick Commands Summary
 
 ```bash
 # Complete deployment and import workflow
 ./openshift/quick-deploy.sh                    # Deploy app from GitHub
-./openshift/import-database.sh backup.json    # Import your custom facts
+./openshift/export-database.sh                 # Export current facts  
+./openshift/import-database.sh backup.json     # Import facts to deployment
 
 # Manual deployment
-oc apply -f openshift/build-configs.yaml      # Create builds
-oc start-build chatapp-backend-build --follow # Build backend
+oc apply -f openshift/build-configs.yaml       # Create builds
+oc start-build chatapp-backend-build --follow  # Build backend
 oc start-build chatapp-frontend-build --follow # Build frontend
-oc apply -f openshift/backend.yaml            # Deploy backend
-oc apply -f openshift/frontend.yaml           # Deploy frontend
+oc apply -f openshift/backend.yaml             # Deploy backend
+oc apply -f openshift/frontend.yaml            # Deploy frontend
 
 # Get application URL
 oc get route chatapp-route -n kasten-demo-chatapp

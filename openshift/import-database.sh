@@ -1,22 +1,26 @@
 #!/bin/bash
 
-# Database Import Script for OpenShift Deployment
+# Database Import Script for OpenShift Deployment  
 # Usage: ./import-database.sh <backup-file.json> [namespace]
+# Note: Current implementation uses in-memory vector storage
 
 set -e
 
-BACKUP_FILE=${1:-"current-facts-backup.json"}
+BACKUP_FILE=${1:-"openshift-facts-backup.json"}
 NAMESPACE=${2:-"kasten-demo-chatapp"}
 
 echo "🔄 Importing database backup to OpenShift deployment"
 echo "📁 Backup file: $BACKUP_FILE"
 echo "🏗️ Namespace: $NAMESPACE"
+echo "💡 Note: App uses in-memory storage - facts imported via API"
 
 # Check if backup file exists
 if [ ! -f "$BACKUP_FILE" ]; then
     echo "❌ Backup file $BACKUP_FILE not found!"
-    echo "💡 To create a backup from local Docker:"
-    echo "   docker cp chatapp-backend-1:/app/data/animal_facts.json ./current-facts-backup.json"
+    echo "💡 Create a backup first:"
+    echo "   ./openshift/export-database.sh"
+    echo "   or from local Docker:"
+    echo "   docker cp chatapp-backend-1:/app/data/animal_facts.json ./backup.json 2>/dev/null"
     exit 1
 fi
 
