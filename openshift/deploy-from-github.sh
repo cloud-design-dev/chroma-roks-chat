@@ -24,10 +24,14 @@ if ! oc whoami &> /dev/null; then
     exit 1
 fi
 
-# Step 1: Update build configs with actual GitHub repo
-echo "📝 Updating build configs with GitHub repo..."
-sed -i.bak "s|https://github.com/your-username/kasten-roks-demo-apps.git|${GITHUB_REPO}|g" openshift/build-configs.yaml
-sed -i.bak "s|ref: main|ref: ${BRANCH}|g" openshift/build-configs.yaml
+# Step 1: Configure branch if different from main
+echo "📝 Using GitHub repo: ${GITHUB_REPO}..."
+echo "📝 Using branch: ${BRANCH}..."
+
+# Update branch if different from main
+if [ "$BRANCH" != "main" ]; then
+    sed -i.bak "s|ref: main|ref: ${BRANCH}|g" openshift/build-configs.yaml
+fi
 
 # Step 2: Backup current data if containers are running locally
 echo "💾 Checking for current data to backup..."

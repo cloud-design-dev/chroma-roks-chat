@@ -5,15 +5,16 @@ Vector database-backed chat app for animal facts demo with Python backend, Node/
 
 ## OpenShift Deployment
 ```bash
-# Option 1: Build from GitHub source (recommended)
-./openshift/deploy-from-github.sh https://github.com/your-username/repo.git main
+# Option 1: Build from GitHub source (ready to use)
+./openshift/deploy-from-github.sh
 
-# Option 2: Manual registry deployment  
-./openshift/deploy.sh your-registry.com/project
+# Option 2: Use different branch
+./openshift/deploy-from-github.sh https://github.com/cloud-design-dev/chroma-roks-chat.git feature-branch
 
 # Manual deployment steps
-oc apply -f openshift/build-configs.yaml    # For GitHub builds
+oc apply -f openshift/build-configs.yaml    # Builds from GitHub
 oc start-build chatapp-backend-build --follow
+oc start-build chatapp-frontend-build --follow
 oc apply -f openshift/backend.yaml
 oc apply -f openshift/frontend.yaml
 oc apply -f openshift/kasten-policy.yaml

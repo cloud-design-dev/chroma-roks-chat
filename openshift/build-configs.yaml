@@ -28,9 +28,9 @@ spec:
   source:
     type: Git
     git:
-      uri: https://github.com/your-username/kasten-roks-demo-apps.git  # Update with your repo
-      ref: main  # Update with your branch
-    contextDir: chatapp/backend
+      uri: https://github.com/cloud-design-dev/chroma-roks-chat.git
+      ref: main
+    contextDir: backend
   strategy:
     type: Docker
     dockerStrategy:
@@ -61,9 +61,9 @@ spec:
   source:
     type: Git
     git:
-      uri: https://github.com/your-username/kasten-roks-demo-apps.git  # Update with your repo
-      ref: main  # Update with your branch
-    contextDir: chatapp/frontend
+      uri: https://github.com/cloud-design-dev/chroma-roks-chat.git
+      ref: main
+    contextDir: frontend
   strategy:
     type: Docker
     dockerStrategy:

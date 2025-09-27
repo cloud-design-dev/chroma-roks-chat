@@ -20,18 +20,20 @@ OpenShift can build your container images directly from GitHub source code. This
 
 ### Deploy from GitHub:
 ```bash
-# Deploy everything from your GitHub repo
-./openshift/deploy-from-github.sh https://github.com/your-username/kasten-roks-demo-apps.git main
+# Deploy everything from your GitHub repo (no parameters needed)
+./openshift/deploy-from-github.sh
 
-# Or use the step-by-step approach below
+# Or specify different branch
+./openshift/deploy-from-github.sh https://github.com/cloud-design-dev/chroma-roks-chat.git feature-branch
 ```
 
 ## 📋 Step-by-Step GitHub Source Deployment
 
-### 1. Update Build Configuration
+### 1. Repository is Ready
 ```bash
-# Edit openshift/build-configs.yaml with your GitHub repo URL
-sed -i 's|https://github.com/your-username/kasten-roks-demo-apps.git|https://github.com/YOUR-USERNAME/YOUR-REPO.git|g' openshift/build-configs.yaml
+# Your code is already at:
+# https://github.com/cloud-design-dev/chroma-roks-chat.git
+# No changes needed to build-configs.yaml
 ```
 
 ### 2. Apply Build Resources
