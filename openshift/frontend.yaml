@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chatapp-frontend
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: frontend
@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: frontend
-        image: image-registry.openshift-image-registry.svc:5000/kasten-demo-chatapp/chatapp-frontend:latest
+        image: image-registry.openshift-image-registry.svc:5000/kasten-demo-apps/chatapp-frontend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -61,7 +61,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chatapp-frontend-service
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: frontend
@@ -80,7 +80,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: chatapp-route
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: frontend

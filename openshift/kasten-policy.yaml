@@ -2,7 +2,7 @@ apiVersion: k10.kasten.io/v1alpha1
 kind: Policy
 metadata:
   name: chatapp-backup-policy
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
 spec:
@@ -31,7 +31,7 @@ apiVersion: k10.kasten.io/v1alpha1
 kind: RestorePoint
 metadata:
   name: chatapp-restore-point
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
 spec:

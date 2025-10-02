@@ -7,7 +7,7 @@ set -e
 
 GITHUB_REPO=${1:-"https://github.com/your-username/kasten-roks-demo-apps.git"}
 BRANCH=${2:-"main"}
-NAMESPACE="kasten-demo-chatapp"
+NAMESPACE="kasten-demo-apps"
 
 echo "🚀 Deploying Animal Facts Chat App from GitHub source to OpenShift"
 echo "📦 GitHub repo: $GITHUB_REPO"

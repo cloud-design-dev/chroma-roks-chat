@@ -2,7 +2,7 @@ apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: chatapp-backend
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: backend
@@ -11,7 +11,7 @@ apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: chatapp-frontend
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: frontend
@@ -20,7 +20,7 @@ apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
   name: chatapp-backend-build
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: backend
@@ -53,7 +53,7 @@ apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
   name: chatapp-frontend-build
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
   labels:
     app: animal-facts-chat
     component: frontend
@@ -86,7 +86,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: github-webhook-secret
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
 type: Opaque
 data:
   WebHookSecretKey: bXlfc3VwZXJfc2VjcmV0X3Rva2Vu  # Base64 encoded "my_super_secret_token"
@@ -95,7 +95,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: generic-webhook-secret
-  namespace: kasten-demo-chatapp
+  namespace: kasten-demo-apps
 type: Opaque
 data:
   WebHookSecretKey: bXlfc3VwZXJfc2VjcmV0X3Rva2Vu  # Base64 encoded "my_super_secret_token"
